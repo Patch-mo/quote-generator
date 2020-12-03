@@ -1,12 +1,28 @@
 const quoteContainer = document.getElementById('quote-container');
 const quoteText = document.getElementById('quote');
 const authorText = document.getElementById('author');
-const twitterBtn = document.getElementById('twiter');
+const twitterButton = document.getElementById('twiter');
 const newQuoteButton = document.getElementById('new-quote');
+const loader = document.getElementById('loader');
+let errorCount = 0;
+
+function showLoadingSpinner() {
+    loader.hidden = false;
+    quoteContainer.hidden = true;
+}
+
+function removeLoadingSpinner() {
+    if (!loader.hidden) {
+        quoteContainer.hidden = false;
+        loader.hidden = true;
+    }
+}
 
 // Get Quote From API
 
 async function getQuote() {
+    showLoadingSpinner();
+    // We need to use a Proxy URL to make our API call in order to avoid a CORS error
     const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     const apiUrl =
         'http://api.forismatic.com/api/1.0/?method=getQuote&lang=en&format=json';
@@ -27,8 +43,16 @@ async function getQuote() {
         }
 
         quoteText.innerText = data.quoteText;
+        // Stop Loader, show Quote
+        removeLoadingSpinner();
     } catch (error) {
-        getQuote();
+        if (errorCount < 10) {
+            errorCount++;
+            getQuote();
+        } else {
+            console.log('too many errors');
+            removeLoadingSpinner();
+        }
     }
 }
 
@@ -37,14 +61,13 @@ async function getQuote() {
 function tweetQuote() {
     const quote = quote.innerText;
     const author = authorText.innerText;
-    const twitterUrl =
-        'https://twitter.com/intent/tweet?text=${quote} - ${author}';
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${quote} - ${author}`;
     window.open(twitterUrl, '_blank');
 }
 
-// Event Listeners
-// newQuoteBtn.addEventListener('click', getQuote);
-// twitterBtn.addEventListener('click', tweetQuote);
-
 // On Load
 getQuote();
+
+// Event Listeners
+newQuoteButton.addEventListener('click', getQuote);
+twitterButton.addEventListener('click', tweetQuote);
